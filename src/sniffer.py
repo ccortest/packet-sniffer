@@ -2,7 +2,7 @@
 Packet Sniffer - Network Traffic Analysis & IDS Engine.
 
 Captures raw network traffic, parses layers, triggers alerts,
-logs activity to a timestamped file, and saves a .pcap capture.
+logs activity to a direct file, and saves a timestamped .pcap capture.
 """
 
 import sys
@@ -17,20 +17,18 @@ from colorama import init, Fore, Style
 # Initialize colorama for cross-platform colored terminal output
 init(autoreset=True)
 
-# Define base directories
-BASE_LOG_DIR = "logs"
+# Define base directories and ensure they exist
+LOG_DIR = "logs"
 CAPTURE_DIR = "captures"
+os.makedirs(LOG_DIR, exist_ok=True)
 os.makedirs(CAPTURE_DIR, exist_ok=True)
 
-# Create a unique timestamped session folder inside 'logs/' for clean organization
+# Define file paths directly inside their respective clean root folders
+LOG_FILE = os.path.join(LOG_DIR, "sniffer.log")
 session_timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-SESSION_LOG_DIR = os.path.join(BASE_LOG_DIR, f"session_{session_timestamp}")
-os.makedirs(SESSION_LOG_DIR, exist_ok=True)
-
-LOG_FILE = os.path.join(SESSION_LOG_DIR, "sniffer.log")
 PCAP_FILE = os.path.join(CAPTURE_DIR, f"traffic_{session_timestamp}.pcap")
 
-# Configure logging system for this session
+# Configure logging system to write directly to logs/sniffer.log
 logging.basicConfig(
     filename=LOG_FILE,
     level=logging.INFO,
@@ -82,7 +80,7 @@ def packet_callback(packet: Packet) -> None:
 def main() -> None:
     """Main execution entry point."""
     print(f"{Fore.GREEN}[*] Starting Packet Sniffer & IDS Engine...{Style.RESET_ALL}")
-    print(f"{Fore.GREEN}[*] Session logs saving to: '{LOG_FILE}'{Style.RESET_ALL}")
+    print(f"{Fore.GREEN}[*] Logs saving to: '{LOG_FILE}'{Style.RESET_ALL}")
     print(f"{Fore.GREEN}[*] PCAP capture will save to: '{PCAP_FILE}' upon exit.{Style.RESET_ALL}")
     print(f"{Fore.GREEN}[*] Press Ctrl+C to stop and export data.\n{Style.RESET_ALL}")
 
@@ -93,14 +91,12 @@ def main() -> None:
         # so we can export them to .pcap seamlessly when stopping.
         captured_packets = sniff(filter="ip", prn=packet_callback, store=True)
 
-        # If sniff finishes normally (e.g., if count was set)
         if captured_packets:
             wrpcap(PCAP_FILE, captured_packets)
 
     except KeyboardInterrupt:
         print(f"\n{Fore.YELLOW}[*] Stopping packet capture and exporting .pcap...{Style.RESET_ALL}")
 
-        # Access the underlying list from the packet list object returned by sniff
         if 'captured_packets' in locals() and captured_packets:
             wrpcap(PCAP_FILE, captured_packets)
             print(f"{Fore.GREEN}[+] Capture successfully saved to {PCAP_FILE}{Style.RESET_ALL}")
