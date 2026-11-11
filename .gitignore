@@ -1,0 +1,16 @@
+# Entornos virtuales
+.venv/
+venv/
+ENV/
+
+# Caché de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Directorios de PyCharm / IDEs
+.idea/
+
+# Archivos de captura y logs locales que no deban subirse
+logs/*.log
+captures/*.pcap
